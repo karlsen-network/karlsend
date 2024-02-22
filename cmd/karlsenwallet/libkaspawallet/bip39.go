@@ -10,8 +10,10 @@ import (
 )
 
 // CreateMnemonic creates a new bip-39 compatible mnemonic
-func CreateMnemonic() (string, error) {
-	const bip39BitSize = 256
+func CreateMnemonic(bip39BitSize int) (string, error) {
+	if bip39BitSize == 0 {
+		bip39BitSize = 256
+	}
 	entropy, _ := bip39.NewEntropy(bip39BitSize)
 	return bip39.NewMnemonic(entropy)
 }

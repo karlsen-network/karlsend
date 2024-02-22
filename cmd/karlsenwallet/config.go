@@ -37,6 +37,7 @@ type createConfig struct {
 	KeysFile          string `long:"keys-file" short:"f" description:"Keys file location (default: ~/.karlsenwallet/keys.json (*nix), %USERPROFILE%\\AppData\\Local\\karlsenwallet\\key.json (Windows))"`
 	Password          string `long:"password" short:"p" description:"Wallet password"`
 	Yes               bool   `long:"yes" short:"y" description:"Assume \"yes\" to all questions"`
+	ChosenEntropy     int    `long:"entropy" short:"e" description:"Set 128 for 12-words seed phrase or 256 for 24-words seed phrase" default:"256"`
 	MinimumSignatures uint32 `long:"min-signatures" short:"m" description:"Minimum required signatures" default:"1"`
 	NumPrivateKeys    uint32 `long:"num-private-keys" short:"k" description:"Number of private keys" default:"1"`
 	NumPublicKeys     uint32 `long:"num-public-keys" short:"n" description:"Total number of keys" default:"1"`

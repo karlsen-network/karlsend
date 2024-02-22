@@ -15,11 +15,11 @@ import (
 )
 
 // CreateMnemonics generates `numKeys` number of mnemonics.
-func CreateMnemonics(params *dagconfig.Params, numKeys uint32, cmdLinePassword string, isMultisig bool) (encryptedPrivateKeys []*EncryptedMnemonic, extendedPublicKeys []string, err error) {
+func CreateMnemonics(params *dagconfig.Params, numKeys uint32, cmdLinePassword string, isMultisig bool, chosenEntropy int) (encryptedPrivateKeys []*EncryptedMnemonic, extendedPublicKeys []string, err error) {
 	mnemonics := make([]string, numKeys)
 	for i := uint32(0); i < numKeys; i++ {
 		var err error
-		mnemonics[i], err = libkaspawallet.CreateMnemonic()
+		mnemonics[i], err = libkaspawallet.CreateMnemonic(chosenEntropy)
 		if err != nil {
 			return nil, nil, err
 		}
