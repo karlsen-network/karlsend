@@ -1,7 +1,16 @@
-Karlsend v2.2.1 - 2024-09-19
+Karlsend v2.2.1 & v2.2.2 - 2024-09-19 - 2024-10-08
 ============================
 
 * Wallet-related improvements and fixes
+* broadcast wallet transactions in chunks
+* adapt wallet UTXO selection to dust patch
+* add options to see wallet and wallet daemon versions
+* lazy wallet utxo sync after broadcasting tx
+* RPC SubmitTransaction: Dequeue old responses from previous requests
+* KIP9 basic wallet compatibility
+---
+* regenerated `karlsenwalletd.pb.go` and `karlsenwalletd_grpc.pb.go`
+* Updated Go modules and dependencies
 
 Karlsend v2.2.0 - 2024-09-03
 ============================

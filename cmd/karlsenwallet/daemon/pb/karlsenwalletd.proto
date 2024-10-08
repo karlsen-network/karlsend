@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/karlsen-network/karlsend/cmd/karlsenwallet/daemon/pb";
+option go_package = "github.com/karlsen-network/karlsend/v2/cmd/karlsenwallet/daemon/pb";
 package karlsenwalletd;
 
 service karlsenwalletd {
