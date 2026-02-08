@@ -24,7 +24,7 @@ type State struct {
 	Target     big.Int
 	prePowHash externalapi.DomainHash
 	//cache 	   cache
-	context      fishhashContext
+	context      *fishhashContext
 	blockVersion uint16
 }
 
@@ -102,7 +102,7 @@ func NewState(header externalapi.MutableBlockHeader, generatedag bool) *State {
 		mat:          *generateMatrix(prePowHash),
 		Timestamp:    timestamp,
 		Nonce:        nonce,
-		context:      *getContext(generatedag, log),
+		context:      getContext(generatedag, log),
 		blockVersion: header.Version(),
 	}
 }
@@ -114,7 +114,7 @@ func GetHashingAlgoVersion() string {
 
 // IsContextReady checks the readiness of the context
 func (state *State) IsContextReady() bool {
-	if state != nil {
+	if state != nil && state.context != nil {
 		return state.context.ready
 	}
 	return false
@@ -149,7 +149,7 @@ func (state *State) CalculateProofOfWorkValue() *big.Int {
 		finalHash = state.mat.HeavyHash(powHash)
 	} else {
 		log.Debugf("Using khashv2 %d %d", state.blockVersion, constants.BlockVersionKHashV2)
-		middleHash := fishHashPlus(&state.context, powHash)
+		middleHash := fishHashPlus(state.context, powHash)
 		writer2 := hashes.NewPoWHashWriter()
 		writer2.InfallibleWrite(middleHash.ByteSlice())
 		finalHash = writer2.Finalize()
