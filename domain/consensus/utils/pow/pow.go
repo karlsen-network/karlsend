@@ -18,7 +18,7 @@ const hashingAlgoVersion = "fishhash-kls-0.0.2"
 
 // State is an intermediate data structure with pre-computed values to speed up mining.
 type State struct {
-	mat        matrix
+	mat        *matrix // can be nil
 	Timestamp  int64
 	Nonce      uint64
 	Target     big.Int
@@ -95,11 +95,17 @@ func NewState(header externalapi.MutableBlockHeader, generatedag bool) *State {
 
 	log.Debugf("BlueWork[%s] BlueScore[%d] DAAScore[%d] Version[%d]", header.BlueWork(), header.BlueScore(), header.DAAScore(), header.Version())
 
+	var mat *matrix
+	// only generate matrix if using khashv1
+	if header.Version() == constants.BlockVersionKHashV1 {
+		mat = generateMatrix(prePowHash)
+	}
+
 	return &State{
 		Target:     *target,
 		prePowHash: *prePowHash,
 		//will remove matrix opow
-		mat:          *generateMatrix(prePowHash),
+		mat:          mat, // nil for v2
 		Timestamp:    timestamp,
 		Nonce:        nonce,
 		context:      getContext(generatedag, log),
