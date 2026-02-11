@@ -20,10 +20,10 @@ import (
 	"github.com/karlsen-network/karlsend/v2/domain/consensus/utils/testutils"
 )
 
-func TestEstimateMassAfterSignatures(t *testing.T) {
+func TestEstimateComputeMassAfterSignatures(t *testing.T) {
 	testutils.ForAllPaths(t, func(t *testing.T, version uint32) {
 		testutils.ForAllNets(t, true, func(t *testing.T, consensusConfig *consensus.Config) {
-			unsignedTransactionBytes, mnemonics, params, teardown := testEstimateMassIncreaseForSignaturesSetUp(t, consensusConfig, version)
+			unsignedTransaction, mnemonics, params, teardown := testEstimateMassIncreaseForSignaturesSetUp(t, consensusConfig, version)
 			defer teardown(false)
 
 			serverInstance := &server{
@@ -34,14 +34,14 @@ func TestEstimateMassAfterSignatures(t *testing.T) {
 				txMassCalculator: txmass.NewCalculator(params.MassPerTxByte, params.MassPerScriptPubKeyByte, params.MassPerSigOp),
 			}
 
-			unsignedTransaction, err := serialization.DeserializePartiallySignedTransaction(unsignedTransactionBytes)
+			estimatedMassAfterSignatures, err := serverInstance.estimateComputeMassAfterSignatures(unsignedTransaction)
 			if err != nil {
-				t.Fatalf("Error deserializing unsignedTransaction: %s", err)
+				t.Fatalf("Error from estimateComputeMassAfterSignatures: %s", err)
 			}
 
-			estimatedMassAfterSignatures, err := serverInstance.estimateMassAfterSignatures(unsignedTransaction)
+			unsignedTransactionBytes, err := serialization.SerializePartiallySignedTransaction(unsignedTransaction)
 			if err != nil {
-				t.Fatalf("Error from estimateMassAfterSignatures: %s", err)
+				t.Fatalf("Error deserializing unsignedTransaction: %s", err)
 			}
 
 			signedTxStep1Bytes, err := libkarlsenwallet.Sign(params, mnemonics[:1], unsignedTransactionBytes, false, version)
@@ -69,8 +69,88 @@ func TestEstimateMassAfterSignatures(t *testing.T) {
 	})
 }
 
+func TestEstimateMassAfterSignatures(t *testing.T) {
+	testutils.ForAllPaths(t, func(t *testing.T, version uint32) {
+		testutils.ForAllNets(t, true, func(t *testing.T, consensusConfig *consensus.Config) {
+
+			unsignedTransaction, mnemonics, params, teardown :=
+				testEstimateMassIncreaseForSignaturesSetUp(t, consensusConfig, version)
+			defer teardown(false)
+
+			for i := range unsignedTransaction.Tx.Inputs {
+				unsignedTransaction.Tx.Inputs[i].UTXOEntry =
+					utxo.NewUTXOEntry(1, &externalapi.ScriptPublicKey{}, false, 0)
+
+				unsignedTransaction.PartiallySignedInputs[i].PrevOutput =
+					&externalapi.DomainTransactionOutput{
+						Value:           1,
+						ScriptPublicKey: &externalapi.ScriptPublicKey{},
+					}
+			}
+
+			serverInstance := &server{
+				params:     params,
+				keysFile:   &keys.File{MinimumSignatures: 2},
+				shutdown:   make(chan struct{}),
+				addressSet: make(walletAddressSet),
+				txMassCalculator: txmass.NewCalculator(
+					params.MassPerTxByte,
+					params.MassPerScriptPubKeyByte,
+					params.MassPerSigOp,
+				),
+			}
+
+			estimatedMassAfterSignatures, err :=
+				serverInstance.estimateMassAfterSignatures(unsignedTransaction)
+			if err != nil {
+				t.Fatalf("Error from estimateMassAfterSignatures: %s", err)
+			}
+
+			unsignedTransactionBytes, err :=
+				serialization.SerializePartiallySignedTransaction(unsignedTransaction)
+			if err != nil {
+				t.Fatalf("Error serializing unsignedTransaction: %s", err)
+			}
+
+			signedTxStep1Bytes, err :=
+				libkarlsenwallet.Sign(params, mnemonics[:1], unsignedTransactionBytes, false, version)
+			if err != nil {
+				t.Fatalf("Sign: %+v", err)
+			}
+
+			signedTxStep2Bytes, err :=
+				libkarlsenwallet.Sign(params, mnemonics[1:2], signedTxStep1Bytes, false, version)
+			if err != nil {
+				t.Fatalf("Sign: %+v", err)
+			}
+
+			extractedSignedTx, err :=
+				libkarlsenwallet.ExtractTransaction(signedTxStep2Bytes, false)
+			if err != nil {
+				t.Fatalf("ExtractTransaction: %+v", err)
+			}
+
+			for i := range extractedSignedTx.Inputs {
+				extractedSignedTx.Inputs[i].UTXOEntry =
+					utxo.NewUTXOEntry(1, &externalapi.ScriptPublicKey{}, false, 0)
+			}
+
+			actualMassAfterSignatures :=
+				serverInstance.txMassCalculator.CalculateTransactionOverallMass(extractedSignedTx)
+
+			if estimatedMassAfterSignatures != actualMassAfterSignatures {
+				t.Errorf(
+					"Estimated mass after signatures: %d but actually got %d",
+					estimatedMassAfterSignatures,
+					actualMassAfterSignatures,
+				)
+			}
+		})
+	})
+}
+
 func testEstimateMassIncreaseForSignaturesSetUp(t *testing.T, consensusConfig *consensus.Config, version uint32) (
-	[]byte, []string, *dagconfig.Params, func(keepDataDir bool)) {
+	*serialization.PartiallySignedTransaction, []string, *dagconfig.Params, func(keepDataDir bool)) {
 
 	consensusConfig.BlockCoinbaseMaturity = 0
 	params := &consensusConfig.Params
