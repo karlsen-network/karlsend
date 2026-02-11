@@ -53,7 +53,10 @@ func getContext(full bool, log *logger.Logger) *fishhashContext {
 	log.Debugf("getContext object 42 : %x", lightCache[42])
 	log.Debugf("getContext object 100 : %x", lightCache[100])
 
-	fullDataset := make([]hash1024, fullDatasetNumItems)
+	var fullDataset []hash1024
+	if full {
+		fullDataset = make([]hash1024, fullDatasetNumItems)
+	}
 
 	sharedContext = &fishhashContext{
 		ready:               false,
