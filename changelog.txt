@@ -1,3 +1,16 @@
+Karlsend v2.3.0 - 2026-02-12
+============================
+
+* pow: use shared fishhash context pointer
+* pow: generate mat for KHashV1 only
+* pow: avoid allocating full khashv2 dataset
+* wallet: add fee estimation to wallet
+* wallet: add support for mass
+* rpc: fix block verbosedata population
+* fix getPayloadHash returns not zero when payload included
+* misc: updated Go modules and dependencies
+* misc: excluded karlsend from release builds
+
 Karlsend v2.2.1 & v2.2.2 - 2024-09-19 - 2024-10-08
 ============================
 
