@@ -18,13 +18,13 @@ const hashingAlgoVersion = "fishhash-kls-0.0.2"
 
 // State is an intermediate data structure with pre-computed values to speed up mining.
 type State struct {
-	mat        matrix
+	mat        *matrix // can be nil
 	Timestamp  int64
 	Nonce      uint64
 	Target     big.Int
 	prePowHash externalapi.DomainHash
 	//cache 	   cache
-	context      fishhashContext
+	context      *fishhashContext
 	blockVersion uint16
 }
 
@@ -53,7 +53,10 @@ func getContext(full bool, log *logger.Logger) *fishhashContext {
 	log.Debugf("getContext object 42 : %x", lightCache[42])
 	log.Debugf("getContext object 100 : %x", lightCache[100])
 
-	fullDataset := make([]hash1024, fullDatasetNumItems)
+	var fullDataset []hash1024
+	if full {
+		fullDataset = make([]hash1024, fullDatasetNumItems)
+	}
 
 	sharedContext = &fishhashContext{
 		ready:               false,
@@ -95,14 +98,20 @@ func NewState(header externalapi.MutableBlockHeader, generatedag bool) *State {
 
 	log.Debugf("BlueWork[%s] BlueScore[%d] DAAScore[%d] Version[%d]", header.BlueWork(), header.BlueScore(), header.DAAScore(), header.Version())
 
+	var mat *matrix
+	// only generate matrix if using khashv1
+	if header.Version() == constants.BlockVersionKHashV1 {
+		mat = generateMatrix(prePowHash)
+	}
+
 	return &State{
 		Target:     *target,
 		prePowHash: *prePowHash,
 		//will remove matrix opow
-		mat:          *generateMatrix(prePowHash),
+		mat:          mat, // nil for v2
 		Timestamp:    timestamp,
 		Nonce:        nonce,
-		context:      *getContext(generatedag, log),
+		context:      getContext(generatedag, log),
 		blockVersion: header.Version(),
 	}
 }
@@ -114,7 +123,7 @@ func GetHashingAlgoVersion() string {
 
 // IsContextReady checks the readiness of the context
 func (state *State) IsContextReady() bool {
-	if state != nil {
+	if state != nil && state.context != nil {
 		return state.context.ready
 	}
 	return false
@@ -149,7 +158,7 @@ func (state *State) CalculateProofOfWorkValue() *big.Int {
 		finalHash = state.mat.HeavyHash(powHash)
 	} else {
 		log.Debugf("Using khashv2 %d %d", state.blockVersion, constants.BlockVersionKHashV2)
-		middleHash := fishHashPlus(&state.context, powHash)
+		middleHash := fishHashPlus(state.context, powHash)
 		writer2 := hashes.NewPoWHashWriter()
 		writer2.InfallibleWrite(middleHash.ByteSlice())
 		finalHash = writer2.Finalize()
