@@ -77,7 +77,7 @@ func (networkFlags *NetworkFlags) ResolveNetwork(parser *flags.Parser) error {
 	if numNets > 1 {
 		message := "Multiple networks parameters (testnet, simnet, devnet, etc.) cannot be used" +
 			"together. Please choose only one network"
-		err := errors.Errorf(message)
+		err := errors.Errorf("%s", message)
 		fmt.Fprintln(os.Stderr, err)
 		parser.WriteHelp(os.Stderr)
 		return err

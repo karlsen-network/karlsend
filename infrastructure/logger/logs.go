@@ -181,7 +181,7 @@ func (l *Logger) printf(lvl Level, tag string, format string, args ...interface{
 	bytesBuf.WriteByte('\n')
 
 	if !l.b.IsRunning() {
-		_, _ = fmt.Fprintf(os.Stderr, bytesBuf.String())
+		_, _ = fmt.Fprintf(os.Stderr, "%s", bytesBuf.String())
 		panic("Writing to the logger when it's not running")
 	}
 	l.writeChan <- logEntry{bytesBuf.Bytes(), lvl}

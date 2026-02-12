@@ -114,6 +114,6 @@ func prettifyResponse(response string) string {
 }
 
 func printErrorAndExit(message string) {
-	fmt.Fprintf(os.Stderr, fmt.Sprintf("%s\n", message))
+	fmt.Fprintln(os.Stderr, message)
 	os.Exit(1)
 }

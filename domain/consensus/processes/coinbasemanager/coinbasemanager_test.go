@@ -129,5 +129,5 @@ func TestBuildSubsidyTable(t *testing.T) {
 		}
 	}
 	tableStr += "\n}"
-	t.Logf(tableStr)
+	t.Logf("%s", tableStr)
 }
