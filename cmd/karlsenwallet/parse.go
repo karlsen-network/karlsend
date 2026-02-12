@@ -6,10 +6,13 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/karlsen-network/karlsend/v2/cmd/karlsenwallet/daemon/server"
+	"github.com/karlsen-network/karlsend/v2/cmd/karlsenwallet/keys"
 	"github.com/karlsen-network/karlsend/v2/cmd/karlsenwallet/libkarlsenwallet/serialization"
 	"github.com/karlsen-network/karlsend/v2/domain/consensus/utils/consensushashing"
 	"github.com/karlsen-network/karlsend/v2/domain/consensus/utils/constants"
 	"github.com/karlsen-network/karlsend/v2/domain/consensus/utils/txscript"
+	"github.com/karlsen-network/karlsend/v2/util/txmass"
 	"github.com/pkg/errors"
 )
 
@@ -21,6 +24,11 @@ func parse(conf *parseConfig) error {
 		return errors.Errorf("Both --transaction and --transaction-file cannot be passed at the same time")
 	}
 
+	keysFile, err := keys.ReadKeysFile(conf.NetParams(), conf.KeysFile)
+	if err != nil {
+		return err
+	}
+
 	transactionHex := conf.Transaction
 	if conf.TransactionFile != "" {
 		transactionHexBytes, err := ioutil.ReadFile(conf.TransactionFile)
@@ -30,10 +38,12 @@ func parse(conf *parseConfig) error {
 		transactionHex = strings.TrimSpace(string(transactionHexBytes))
 	}
 
-	transactions, err := decodeTransactionsFromHex(transactionHex)
+	transactions, err := server.DecodeTransactionsFromHex(transactionHex)
 	if err != nil {
 		return err
 	}
+
+	txMassCalculator := txmass.NewCalculator(conf.NetParams().MassPerTxByte, conf.NetParams().MassPerScriptPubKeyByte, conf.NetParams().MassPerSigOp)
 	for i, transaction := range transactions {
 
 		partiallySignedTransaction, err := serialization.DeserializePartiallySignedTransaction(transaction)
@@ -79,7 +89,16 @@ func parse(conf *parseConfig) error {
 		}
 		fmt.Println()
 
-		fmt.Printf("Fee:\t%d Sompi\n\n", allInputSompi-allOutputSompi)
+		fee := allInputSompi - allOutputSompi
+		fmt.Printf("Fee:\t%d Sompi (%f KLS)\n", fee, float64(fee)/float64(constants.SompiPerKarlsen))
+		mass, err := server.EstimateMassAfterSignatures(partiallySignedTransaction, keysFile.ECDSA, keysFile.MinimumSignatures, txMassCalculator)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Mass: %d grams\n", mass)
+		feeRate := float64(fee) / float64(mass)
+		fmt.Printf("Fee rate: %.2f Sompi/Gram\n", feeRate)
 	}
 
 	return nil

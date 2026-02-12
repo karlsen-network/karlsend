@@ -51,10 +51,10 @@ func (ctx *Context) PopulateBlockWithVerboseData(block *appmessage.RPCBlock, dom
 		return err
 	}
 
-	if blockInfo.BlockStatus == externalapi.StatusInvalid {
-		return errors.Wrap(ErrBuildBlockVerboseDataInvalidBlock, "cannot build verbose data for "+
-			"invalid block")
-	}
+	// if blockInfo.BlockStatus == externalapi.StatusInvalid {
+	// 	return errors.Wrap(ErrBuildBlockVerboseDataInvalidBlock, "cannot build verbose data for "+
+	// 		"invalid block")
+	// }
 
 	_, childrenHashes, err := ctx.Domain.Consensus().GetBlockRelations(blockHash)
 	if err != nil {
@@ -91,6 +91,10 @@ func (ctx *Context) PopulateBlockWithVerboseData(block *appmessage.RPCBlock, dom
 		if err != nil {
 			return err
 		}
+	}
+
+	if len(domainBlock.Transactions) == 0 {
+		return nil
 	}
 
 	transactionIDs := make([]string, len(domainBlock.Transactions))

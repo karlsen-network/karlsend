@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/karlsen-network/karlsend/v2/cmd/karlsenwallet/libkarlsenwallet/serialization"
 	"github.com/karlsen-network/karlsend/v2/domain/consensus/utils/constants"
 
 	"github.com/karlsen-network/karlsend/v2/cmd/karlsenwallet/libkarlsenwallet"
@@ -25,6 +26,20 @@ func forSchnorrAndECDSA(t *testing.T, testFunc func(t *testing.T, ecdsa bool)) {
 	t.Run("ecdsa", func(t *testing.T) {
 		testFunc(t, true)
 	})
+}
+
+func createUnsignedTransactionSerialized(
+	extendedPublicKeys []string,
+	minimumSignatures uint32,
+	payments []*libkarlsenwallet.Payment,
+	selectedUTXOs []*libkarlsenwallet.UTXO) ([]byte, error) {
+
+	tx, err := libkarlsenwallet.CreateUnsignedTransaction(extendedPublicKeys, minimumSignatures, payments, selectedUTXOs)
+	if err != nil {
+		return nil, err
+	}
+
+	return serialization.SerializePartiallySignedTransaction(tx)
 }
 
 func TestMultisig(t *testing.T) {
@@ -104,7 +119,7 @@ func TestMultisig(t *testing.T) {
 					},
 				}
 
-				unsignedTransaction, err := libkarlsenwallet.CreateUnsignedTransaction(publicKeys, minimumSignatures,
+				unsignedTransaction, err := createUnsignedTransactionSerialized(publicKeys, minimumSignatures,
 					[]*libkarlsenwallet.Payment{{
 						Address: address,
 						Amount:  10,
@@ -267,7 +282,7 @@ func TestP2PK(t *testing.T) {
 					},
 				}
 
-				unsignedTransaction, err := libkarlsenwallet.CreateUnsignedTransaction(publicKeys, minimumSignatures,
+				unsignedTransaction, err := createUnsignedTransactionSerialized(publicKeys, minimumSignatures,
 					[]*libkarlsenwallet.Payment{{
 						Address: address,
 						Amount:  10,
@@ -431,7 +446,7 @@ func TestMaxSompi(t *testing.T) {
 				},
 			}
 
-			unsignedTxWithLargeInputAmount, err := libkarlsenwallet.CreateUnsignedTransaction(publicKeys, minimumSignatures,
+			unsignedTxWithLargeInputAmount, err := createUnsignedTransactionSerialized(publicKeys, minimumSignatures,
 				[]*libkarlsenwallet.Payment{{
 					Address: address,
 					Amount:  10,
@@ -482,7 +497,7 @@ func TestMaxSompi(t *testing.T) {
 				},
 			}
 
-			unsignedTxWithLargeInputAndOutputAmount, err := libkarlsenwallet.CreateUnsignedTransaction(publicKeys, minimumSignatures,
+			unsignedTxWithLargeInputAndOutputAmount, err := createUnsignedTransactionSerialized(publicKeys, minimumSignatures,
 				[]*libkarlsenwallet.Payment{{
 					Address: address,
 					Amount:  22e6 * constants.SompiPerKarlsen,

@@ -152,7 +152,7 @@ and macOS `x64` as universal binary can be downloaded at: [https://github.com/ka
 
 ### Build from Source
 
-Go 1.19 or later is required. Install Go according to the installation
+Go 1.24 or later is required. Install Go according to the installation
 instructions at [http://golang.org/doc/install](http://golang.org/doc/install).
 Ensure Go was installed properly and is a supported version:
 

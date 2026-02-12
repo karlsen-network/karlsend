@@ -4,7 +4,7 @@ ARG KARLSENMINER_IMAGE
 FROM ${KARLSEND_IMAGE} as karlsend
 FROM ${KARLSENMINER_IMAGE} as karlsenminer
 
-FROM golang:1.19-alpine
+FROM golang:1.24-alpine
 
 RUN mkdir -p /go/src/github.com/karlsen-network/karlsend/
 

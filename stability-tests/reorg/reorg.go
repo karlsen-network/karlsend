@@ -158,7 +158,7 @@ func testReorg(cfg *configFlags) {
 func fail(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Fprintln(os.Stderr, msg)
-	log.Criticalf(msg)
+	log.Criticalf("%s", msg)
 	backendLog.Close()
 	os.Exit(1)
 }

@@ -1,7 +1,7 @@
 name: Build and upload assets
 on:
   release:
-    types: [ published ]
+    types: [published]
 
 jobs:
   build:
@@ -26,7 +26,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23.1
+          go-version: 1.24.1
 
       - name: Update sources
         if: matrix.TARGET == 'linux/aarch64' || matrix.TARGET == 'windows/x64'
@@ -43,7 +43,7 @@ jobs:
           # `-extldflags=-static` - means static link everything,
           # `-tags netgo,osusergo` means use pure go replacements for "os/user" and "net"
           # `-s -w` strips the binary to produce smaller size binaries
-          go build -v -ldflags="-s -w -extldflags=-static" -tags netgo,osusergo -o ./bin/ . ./cmd/...
+          go build -v -ldflags="-s -w -extldflags=-static" -tags netgo,osusergo -o ./bin/ ./cmd/...
           archive="bin/karlsend-${{ github.event.release.tag_name }}-linux-x86_64.zip"
           asset_name="karlsend-${{ github.event.release.tag_name }}-linux-x86_64.zip"
           zip -r "${archive}" ./bin/*
@@ -62,7 +62,7 @@ jobs:
           # `-extldflags=-static` - means static link everything,
           # `-tags netgo,osusergo` means use pure go replacements for "os/user" and "net"
           # `-s -w` strips the binary to produce smaller size binaries
-          go build -v -ldflags="-s -w -extldflags=-static" -tags netgo,osusergo -o ./bin/ . ./cmd/...
+          go build -v -ldflags="-s -w -extldflags=-static" -tags netgo,osusergo -o ./bin/ ./cmd/...
           archive="bin/karlsend-${{ github.event.release.tag_name }}-linux-aarch64.zip"
           asset_name="karlsend-${{ github.event.release.tag_name }}-linux-aarch64.zip"
           zip -r "${archive}" ./bin/*
@@ -81,7 +81,7 @@ jobs:
           # `-extldflags=-static` - means static link everything,
           # `-tags netgo,osusergo` means use pure go replacements for "os/user" and "net"
           # `-s -w` strips the binary to produce smaller size binaries
-          go build -v -ldflags="-s -w -extldflags=-static" -tags netgo,osusergo -o ./bin/ . ./cmd/...
+          go build -v -ldflags="-s -w -extldflags=-static" -tags netgo,osusergo -o ./bin/ ./cmd/...
           archive="bin/karlsend-${{ github.event.release.tag_name }}-windows-x64.zip"
           asset_name="karlsend-${{ github.event.release.tag_name }}-windows-x64.zip"
           zip -r "${archive}" ./bin/*
@@ -91,7 +91,7 @@ jobs:
       - name: Build on Linux for ${{ matrix.TARGET }}
         if: matrix.TARGET == 'macos/x64'
         run: |
-          go build -v -ldflags="-s -w" -o ./bin/ . ./cmd/...
+          go build -v -ldflags="-s -w" -o ./bin/ ./cmd/...
           archive="bin/karlsend-${{ github.event.release.tag_name }}-macos-x64.zip"
           asset_name="karlsend-${{ github.event.release.tag_name }}-macos-x64.zip"
           zip -r "${archive}" ./bin/*

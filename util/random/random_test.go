@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
+	"runtime"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -58,11 +61,31 @@ func TestRandomUint64(t *testing.T) {
 	}
 }
 
+// getGoVersion returns the current Go runtime version as a float64. It fails the test if the version
+// parsing encounters an error.
+func getGoVersion(t *testing.T) float64 {
+	t.Helper()
+	version := runtime.Version()
+	version = version[2:]
+	version = version[:strings.LastIndex(version, ".")]
+	vernum, err := strconv.ParseFloat(version, 64)
+	if err != nil {
+		t.Fatalf("failed to parse Go version: %s", err)
+	}
+	return vernum
+}
+
 // TestRandomUint64Errors uses a fake reader to force error paths to be executed
 // and checks the results accordingly.
 func TestRandomUint64Errors(t *testing.T) {
+	version := getGoVersion(t)
+	if version >= 1.24 {
+		t.Skip("Go >=1.24 never fails on broken rand Reader. See: https://github.com/golang/go/issues/66821")
+	}
+
 	// Test short reads.
 	reader := rand.Reader
+
 	rand.Reader = &fakeRandReader{n: 2, err: io.EOF}
 	nonce, err := Uint64()
 	if !errors.Is(err, io.ErrUnexpectedEOF) {
